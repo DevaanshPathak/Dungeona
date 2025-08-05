@@ -1,10 +1,27 @@
 import os
 import sys
+from colorama import init
+init()
+
+def clear_screen():
+    if os.name == 'nt':
+        os.system('cls')  # Windows
+    else:
+        os.system('clear')  # Unix/Linux/Mac
 
 def render(world, player, view_radius_x=20, view_radius_y=10):
-    sys.stdout.write('\033[2J\033[H')  # Clear screen and move to top-left
-    sys.stdout.flush()
+    clear_screen()
 
+    # === HUD Section ===
+    hud_lines = [
+        f"Pos: ({player.x}, {player.y})",
+        f"Tile: {world.get_tile_at(player.x, player.y)}",
+        f"Status: {'Jumping' if player.jumping else 'Falling' if not world.is_solid(world.get_tile_at(player.x, player.y + 1)) else 'Standing'}",
+    ]
+    hud = " | ".join(hud_lines)
+    print(hud)
+
+    # === Game Viewport ===
     top = player.y - view_radius_y
     bottom = player.y + view_radius_y
     left = player.x - view_radius_x
@@ -25,4 +42,3 @@ def render(world, player, view_radius_x=20, view_radius_y=10):
         print('|' + row + '|')
 
     print(border_top_bottom)
-

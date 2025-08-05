@@ -3,47 +3,56 @@ class Player:
         self.x = x
         self.y = y
         self.jumping = False
-        self.jump_height = 2  # how high player can jump
+        self.jump_height = 2
         self.jump_progress = 0
 
+    def in_water(self, world):
+        return world.get_tile(self.x, self.y) == '~'
+
     def move(self, direction, world):
-        dx, dy = 0, 0
-        if direction == 'a':
-            dx = -1
-        elif direction == 'd':
-            dx = 1
-        elif direction == 's':
-            dy = 1
+        dx = {"a": -1, "d": 1}.get(direction, 0)
+        dy = {"w": -1, "s": 1}.get(direction, 0)
 
         new_x = self.x + dx
-        new_y = self.y + dy
+        new_y = self.y + dy if self.in_water(world) else self.y
 
-        tile = world.get_tile_at(new_x, new_y)
-        if not world.is_solid(tile):
+        tile = world.get_tile(new_x, new_y)
+        if not world.is_solid(tile) or tile == '~':
             self.x = new_x
             self.y = new_y
 
+            # 🛠️ After moving, check if the player is now unsupported (falling)
+            if not self.in_water(world) and not world.is_solid(world.get_tile(self.x, self.y + 1)) and not self.jumping:
+                self.apply_gravity(world)
+
+
     def apply_gravity(self, world):
-        if not self.jumping:
-            while world.get_tile_at(self.x, self.y + 1) in world.air_tiles:
-                self.y += 1
+        if self.jumping or self.in_water(world):
+            return  # Skip gravity while jumping or swimming
+
+        while not world.is_solid(world.get_tile(self.x, self.y + 1)):
+            self.y += 1
+            if self.y >= world.height - 1:
+                break
 
     def jump(self, world):
         if self.jumping:
-            return  # already jumping
+            return  # Already jumping
 
-        # Only allow jumping if standing on solid ground
-        if world.is_solid(world.get_tile_at(self.x, self.y + 1)):
+        if world.is_solid(world.get_tile(self.x, self.y + 1)):
             self.jumping = True
             self.jump_progress = self.jump_height
 
     def update_jump(self, world):
         if self.jumping and self.jump_progress > 0:
-            above_tile = world.get_tile_at(self.x, self.y - 1)
-            if not world.is_solid(above_tile):
+            above = world.get_tile(self.x, self.y - 1)
+            if not world.is_solid(above):
                 self.y -= 1
                 self.jump_progress -= 1
             else:
-                self.jumping = False  # blocked above
+                self.jumping = False
         else:
             self.jumping = False
+
+def in_water(self, world):
+    return world.get_tile(self.x, self.y) == "~"

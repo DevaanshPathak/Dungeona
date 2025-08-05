@@ -12,9 +12,20 @@ def main():
         render(world, player)
         key = get_key()
 
-        if key in ('w', 'a', 's', 'd'):
+        if key in ('a', 'd'):
             player.move(key, world)
+        elif key == 'w':
+            if player.in_water(world):
+                player.move('w', world)  # swim upward
+            else:
+                player.jump(world)
+        elif key == 's':
+            if player.in_water(world):
+                player.move('s', world)  # swim downward
         elif key == 'q':
             break
 
+        player.update_jump(world)
         player.apply_gravity(world)
+
+        time.sleep(0.05)
