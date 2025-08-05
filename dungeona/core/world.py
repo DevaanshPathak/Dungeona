@@ -18,13 +18,14 @@ class World:
             for i in range(self.octaves)
         ]
 
-        # Generate 2D world map
+        # Use generate_tile instead of get_tile_at
         self.tiles = [
-            [self.get_tile_at(x, y) for x in range(self.width)]
+            [self.generate_tile(x, y) for x in range(self.width)]
             for y in range(self.height)
         ]
 
-    def get_tile_at(self, x, y):
+    def generate_tile(self, x, y):
+        """Generates tile based on Perlin noise terrain only once at creation."""
         nx = x * self.scale
 
         elevation = 0
@@ -45,7 +46,7 @@ class World:
         else:
             depth = y - ground_y
             if depth > 6:
-                return "^"  # Mountains
+                return "^"  # Dirt / mountain
             elif depth > 4:
                 return "#"  # Forest
             elif depth > 2:
@@ -56,10 +57,17 @@ class World:
                 return "~"  # Water
 
     def get_tile(self, x, y):
+        """Returns the current tile (after edits like digging)."""
         if 0 <= x < self.width and 0 <= y < self.height:
             return self.tiles[y][x]
         else:
             return " "  # Out of bounds is air
 
+    def set_tile(self, x, y, tile_char):
+        """Sets the tile at given location to a new character."""
+        if 0 <= x < self.width and 0 <= y < self.height:
+            self.tiles[y][x] = tile_char
+
     def is_solid(self, tile):
+        """Returns True if a tile blocks movement."""
         return tile not in (" ", "~")  # air and water are non-solid

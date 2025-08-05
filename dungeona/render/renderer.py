@@ -15,8 +15,8 @@ def render(world, player, view_radius_x=20, view_radius_y=10):
     # === HUD Section ===
     hud_lines = [
         f"Pos: ({player.x}, {player.y})",
-        f"Tile: {world.get_tile_at(player.x, player.y)}",
-        f"Status: {'Jumping' if player.jumping else 'Falling' if not world.is_solid(world.get_tile_at(player.x, player.y + 1)) else 'Standing'}",
+        f"Tile: {world.get_tile(player.x, player.y)}",
+        f"Status: {'Jumping' if player.jumping else 'Falling' if not world.is_solid(world.get_tile(player.x, player.y + 1)) else 'Standing'}",
     ]
     hud = " | ".join(hud_lines)
     print(hud)
@@ -38,7 +38,14 @@ def render(world, player, view_radius_x=20, view_radius_y=10):
             if x == player.x and y == player.y:
                 row += '@'
             else:
-                row += world.get_tile_at(x, y)
+                row += world.get_tile(x, y)
         print('|' + row + '|')
 
     print(border_top_bottom)
+
+    # === Inventory Display ===
+    if hasattr(player, 'inventory') and player.inventory:
+        inventory = "Inventory: " + ", ".join(f"{k} x{v}" for k, v in player.inventory.items())
+    else:
+        inventory = "Inventory: (empty)"
+    print(inventory)

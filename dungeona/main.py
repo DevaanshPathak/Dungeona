@@ -22,6 +22,8 @@ def main():
         elif key == 's':
             if player.in_water(world):
                 player.move('s', world)  # swim downward
+        elif key == 'b':
+            player.break_tile(world, 'down')
         elif key == 'q':
             break
 
