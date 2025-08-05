@@ -1,30 +1,28 @@
 import os
-import shutil
+import sys
 
-def clear_screen():
-    os.system('cls' if os.name == 'nt' else 'clear')
+def render(world, player, view_radius_x=20, view_radius_y=10):
+    sys.stdout.write('\033[2J\033[H')  # Clear screen and move to top-left
+    sys.stdout.flush()
 
-def render(world, player):
-    clear_screen()
+    top = player.y - view_radius_y
+    bottom = player.y + view_radius_y
+    left = player.x - view_radius_x
+    right = player.x + view_radius_x
 
-    # Get terminal size with fallback
-    columns, rows = shutil.get_terminal_size((80, 24))
-    viewport_width = min(columns, 80) - 1   # adjust for wrapping
-    viewport_height = min(rows, 24) - 1
+    width = right - left
+    border_top_bottom = '+' + ('-' * width) + '+'
 
-    half_w = viewport_width // 2
-    half_h = viewport_height // 2
+    print(border_top_bottom)
 
-    top = player.y - half_h
-    bottom = player.y + half_h
-    left = player.x - half_w
-    right = player.x + half_w
-
-    for y in range(top, bottom + 1):
-        row = ""
-        for x in range(left, right + 1):
+    for y in range(top, bottom):
+        row = ''
+        for x in range(left, right):
             if x == player.x and y == player.y:
-                row += "@"
+                row += '@'
             else:
                 row += world.get_tile_at(x, y)
-        print(row)
+        print('|' + row + '|')
+
+    print(border_top_bottom)
+

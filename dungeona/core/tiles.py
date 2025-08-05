@@ -5,8 +5,10 @@ TILES = {
     "wall": "#",
     "water": "~",
     "grass": "\"",
-    "rock": "o"
+    "rock": "o",
+    "air": " "
 }
+
 
 WEIGHTS = {
     "floor": 0.5,

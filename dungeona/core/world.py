@@ -1,60 +1,65 @@
 import random
+from perlin_noise import PerlinNoise
 
 class World:
-    def __init__(self, seed=None):
-        self.seed = seed or random.randint(0, 1_000_000)
-        self.tiles = {}
-        self.generate()
+    def __init__(self, width=100, height=60, seed=None):
+        self.width = width
+        self.height = height
 
-    def generate(self, width=200, height=100):
-        random.seed(self.seed)
+        if isinstance(seed, str):
+            seed = abs(hash(seed)) % (2**31)
 
-        for y in range(-height // 2, height // 2):
-            for x in range(-width // 2, width // 2):
-                # Distance from center to add more water near the middle
-                dist = abs(x) + abs(y)
+        self.seed = seed or random.randint(0, 999999)
+        self.scale = 0.1
+        self.octaves = 4
 
-                r = random.random()
+        self.noise_layers = [
+            PerlinNoise(octaves=2 ** i, seed=self.seed + i)
+            for i in range(self.octaves)
+        ]
 
-                if r < 0.05:
-                    tile = "#"
-                elif r < 0.15:
-                    tile = "\""
-                elif r < 0.25:
-                    tile = "o"
-                elif r < 0.35 and dist < 30:
-                    tile = "~"
-                else:
-                    tile = "."
-
-                self.tiles[(x, y)] = tile
-
-        self.smooth_terrain()
+        # Generate 2D world map
+        self.tiles = [
+            [self.get_tile_at(x, y) for x in range(self.width)]
+            for y in range(self.height)
+        ]
 
     def get_tile_at(self, x, y):
-        return self.tiles.get((x, y), ".")
+        nx = x * self.scale
 
-    def set_tile_at(self, x, y, tile):
-        self.tiles[(x, y)] = tile
+        elevation = 0
+        amplitude = 1.0
+        total_amplitude = 0.0
 
-    def smooth_terrain(self):
-        """Smooth terrain by reinforcing neighbors."""
-        def neighbors(x, y):
-            return [self.tiles.get((x + dx, y + dy), ".")
-                    for dx in [-1, 0, 1]
-                    for dy in [-1, 0, 1]
-                    if not (dx == 0 and dy == 0)]
+        for noise_func in self.noise_layers:
+            n = noise_func([nx])
+            elevation += n * amplitude
+            total_amplitude += amplitude
+            amplitude *= 0.5
 
-        new_tiles = {}
-        for (x, y), tile in self.tiles.items():
-            n = neighbors(x, y)
-            if n.count("~") > 4:
-                new_tiles[(x, y)] = "~"
-            elif n.count("\"") > 4:
-                new_tiles[(x, y)] = "\""
-            elif n.count("#") > 4:
-                new_tiles[(x, y)] = "#"
+        elevation /= total_amplitude
+        ground_y = int(elevation * 10 + 30)  # Controls terrain height center
+
+        if y < ground_y:
+            return " "  # Air
+        else:
+            depth = y - ground_y
+            if depth > 6:
+                return "^"  # Mountains
+            elif depth > 4:
+                return "#"  # Forest
+            elif depth > 2:
+                return ","  # Grass
+            elif depth > 1:
+                return "."  # Sand
             else:
-                new_tiles[(x, y)] = tile
+                return "~"  # Water
 
-        self.tiles.update(new_tiles)
+    def get_tile(self, x, y):
+        if 0 <= x < self.width and 0 <= y < self.height:
+            return self.tiles[y][x]
+        else:
+            return " "  # Out of bounds is air
+
+    def is_solid(self, tile):
+        return tile not in (" ", "~")  # air and water are non-solid
